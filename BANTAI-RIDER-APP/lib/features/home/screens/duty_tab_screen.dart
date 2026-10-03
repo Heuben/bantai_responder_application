@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/utils/shift_duration.dart';
+
 class DutyTabScreen extends StatefulWidget {
   const DutyTabScreen({
     super.key,
@@ -13,7 +15,7 @@ class DutyTabScreen extends StatefulWidget {
 
   final bool isOnDuty;
   final Duration duration;
-  final VoidCallback onToggleDuty;
+  final void Function([Duration?]) onToggleDuty;
   final String userName;
   final String callSign;
   final String role;
@@ -38,13 +40,13 @@ class _DutyTabScreenState extends State<DutyTabScreen> {
   }
 
   void _showActivationWizard() {
-    showModalBottomSheet<void>(
+    showModalBottomSheet<Duration>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _DutyActivationWizard(
-        onConfirm: () {
-          widget.onToggleDuty();
+        onConfirm: (selectedDuration) {
+          widget.onToggleDuty(selectedDuration);
           if (Navigator.of(context).canPop()) {
             Navigator.of(context).pop();
           }
@@ -357,13 +359,25 @@ class _ActiveDutyCard extends StatelessWidget {
   });
 
   final Duration duration;
-  final VoidCallback onToggleDuty;
+  final void Function([Duration?]) onToggleDuty;
 
   String _formatDuration(Duration value) {
     final hours = value.inHours.remainder(24).toString().padLeft(2, '0');
     final minutes = (value.inMinutes.remainder(60)).toString().padLeft(2, '0');
     final seconds = (value.inSeconds.remainder(60)).toString().padLeft(2, '0');
     return '$hours:$minutes:$seconds';
+  }
+
+  String _shiftLabel(Duration value) {
+    final hours = value.inHours;
+    final minutes = value.inMinutes.remainder(60);
+    if (hours == 0 && minutes == 0) {
+      return '0 hours';
+    }
+    if (minutes == 0) {
+      return '$hours hour${hours == 1 ? '' : 's'}';
+    }
+    return '${hours}h ${minutes}m';
   }
 
   @override
@@ -404,9 +418,9 @@ class _ActiveDutyCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            'Remaining of your 8-hour shift',
-            style: TextStyle(
+          Text(
+            'Remaining of your ${_shiftLabel(duration)} shift',
+            style: const TextStyle(
               color: Color(0xFF5C5C5C),
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -651,7 +665,7 @@ class _StatusPill extends StatelessWidget {
 class _DutyActivationWizard extends StatefulWidget {
   const _DutyActivationWizard({required this.onConfirm});
 
-  final VoidCallback onConfirm;
+  final ValueChanged<Duration> onConfirm;
 
   @override
   State<_DutyActivationWizard> createState() => _DutyActivationWizardState();
@@ -664,11 +678,17 @@ class _DutyActivationWizardState extends State<_DutyActivationWizard> {
   int _step = 0;
   int _selectedHours = 8;
   double _customHours = 6;
+  bool _isCustomShift = false;
   bool _onDuty = true;
 
+  Duration get _selectedDuration => ShiftDurationResolver.resolve(
+        selectedHours: _selectedHours,
+        customHours: _customHours,
+        isCustom: _isCustomShift,
+      );
+
   String _formatEndTime() {
-    final hours = _selectedHours == 1 ? 1 : _selectedHours;
-    final end = DateTime.now().add(Duration(hours: hours));
+    final end = DateTime.now().add(_selectedDuration);
     final suffix = end.hour >= 12 ? 'PM' : 'AM';
     return '${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')} $suffix';
   }
@@ -738,7 +758,7 @@ class _DutyActivationWizardState extends State<_DutyActivationWizard> {
                             setState(() => _step++);
                             return;
                           }
-                          widget.onConfirm();
+                          widget.onConfirm(_selectedDuration);
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _step == 2 ? _green : _red,
@@ -841,22 +861,35 @@ class _DutyActivationWizardState extends State<_DutyActivationWizard> {
             ),
             const SizedBox(height: 18),
             _ShiftChoice(
+              title: '6 hours',
+              subtitle: 'Short tour of duty',
+              selected: _selectedHours == 6 && !_isCustomShift,
+              onTap: () => setState(() {
+                _selectedHours = 6;
+                _customHours = 6;
+                _isCustomShift = false;
+              }),
+            ),
+            const SizedBox(height: 12),
+            _ShiftChoice(
               title: '8 hours',
               subtitle: 'Standard tour of duty',
-              selected: _selectedHours == 8 && _customHours == 6,
+              selected: _selectedHours == 8 && !_isCustomShift,
               onTap: () => setState(() {
                 _selectedHours = 8;
-                _customHours = 6;
+                _customHours = 8;
+                _isCustomShift = false;
               }),
             ),
             const SizedBox(height: 12),
             _ShiftChoice(
               title: '12 hours',
               subtitle: 'Extended tour',
-              selected: _selectedHours == 12,
+              selected: _selectedHours == 12 && !_isCustomShift,
               onTap: () => setState(() {
                 _selectedHours = 12;
                 _customHours = 12;
+                _isCustomShift = false;
               }),
             ),
             const SizedBox(height: 12),
@@ -909,6 +942,7 @@ class _DutyActivationWizardState extends State<_DutyActivationWizard> {
                         setState(() {
                           _customHours = value;
                           _selectedHours = value.round();
+                          _isCustomShift = true;
                         });
                       },
                     ),

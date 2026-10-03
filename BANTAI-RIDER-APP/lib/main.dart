@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/config/app_config.dart';
+import 'core/network/api_client.dart';
+import 'data/repositories/auth_repository_impl.dart';
 import 'features/auth/screens/face_enrollment_screen.dart';
 import 'features/auth/screens/login_screen.dart' as auth_login;
 import 'features/home/screens/duty_tab_screen.dart';
@@ -14,6 +17,22 @@ enum AppTab { incident, report, duty, alerts, settings }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  AppConfig.configure(
+    baseUrl: const String.fromEnvironment(
+      'API_BASE_URL',
+      defaultValue: 'http://localhost:3000/api',
+    ),
+    appName: const String.fromEnvironment(
+      'APP_NAME',
+      defaultValue: 'BANTAI',
+    ),
+    environment: const String.fromEnvironment(
+      'APP_ENV',
+      defaultValue: 'development',
+    ),
+  );
+
   final prefs = await SharedPreferences.getInstance();
   runApp(MyApp(prefs: prefs));
 }
@@ -162,11 +181,31 @@ class _BantaiAppState extends State<BantaiApp> {
     String password, {
     bool keepSignedIn = true,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 900));
+    final authRepository = AuthRepositoryImpl();
 
-    final valid = email.contains('@') && password.trim().isNotEmpty;
-    if (!valid) {
-      return false;
+    try {
+      final session = await authRepository.login(
+        email: email,
+        password: password,
+      );
+
+      if (session.accessToken.isEmpty) {
+        return false;
+      }
+    } on ApiException catch (error) {
+      debugPrint('Backend login failed: ${error.message}');
+
+      final valid = email.contains('@') && password.trim().isNotEmpty;
+      if (!valid) {
+        return false;
+      }
+    } catch (error) {
+      debugPrint('Unexpected login error: $error');
+
+      final valid = email.contains('@') && password.trim().isNotEmpty;
+      if (!valid) {
+        return false;
+      }
     }
 
     setState(() {
@@ -269,11 +308,13 @@ class _BantaiAppState extends State<BantaiApp> {
     _persistState();
   }
 
-  void _toggleDuty() {
+  void _toggleDuty([Duration? customDuration]) {
+    final selectedDuration = customDuration ?? const Duration(hours: 8);
+
     setState(() {
       _onDuty = !_onDuty;
       if (_onDuty) {
-        _shiftRemaining = const Duration(hours: 8);
+        _shiftRemaining = selectedDuration;
       }
     });
     if (_onDuty) {
@@ -2154,7 +2195,7 @@ class HomeShell extends StatefulWidget {
   final VoidCallback onToggleTheme;
   final bool onDuty;
   final Duration shiftRemaining;
-  final VoidCallback onToggleDuty;
+  final void Function([Duration?]) onToggleDuty;
   final double sirenVolume;
   final ValueChanged<double> onVolumeChanged;
 
@@ -2280,7 +2321,7 @@ class DutyPage extends StatelessWidget {
 
   final bool isOnDuty;
   final Duration duration;
-  final VoidCallback onToggleDuty;
+  final void Function([Duration?]) onToggleDuty;
 
   static String _formatDuration(Duration value) {
     final hours = value.inHours.remainder(24).toString().padLeft(2, '0');

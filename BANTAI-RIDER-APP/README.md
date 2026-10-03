@@ -1,6 +1,22 @@
 # banta_rider_app
 
-A new Flutter project.
+A Flutter rider/responder application structured for backend integration.
+
+## Backend configuration
+
+The app now includes a centralized backend config and API client layer. Configure the backend target with environment variables before running the app:
+
+- `APP_ENV=development|staging|production`
+- `APP_NAME=BANTAI`
+- `API_BASE_URL=http://localhost:3000/api`
+
+A sample file is included at `.env.example`.
+
+Example run:
+
+```bash
+flutter run --dart-define=APP_ENV=development --dart-define=APP_NAME=BANTAI --dart-define=API_BASE_URL=http://localhost:3000/api
+```
 
 ## Getting Started
 
