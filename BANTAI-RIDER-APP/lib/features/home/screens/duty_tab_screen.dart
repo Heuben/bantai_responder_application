@@ -25,20 +25,6 @@ class DutyTabScreen extends StatefulWidget {
 }
 
 class _DutyTabScreenState extends State<DutyTabScreen> {
-  static const Color _red = Color(0xFFE71D24);
-  static const Color _redSoft = Color(0xFFFDECEC);
-  static const Color _green = Color(0xFF1FAF65);
-  static const Color _greenSoft = Color(0xFFEAF9F0);
-  static const Color _text = Color(0xFF1D1D1D);
-  static const Color _muted = Color(0xFF5C5C5C);
-
-  String _formatDuration(Duration value) {
-    final hours = value.inHours.remainder(24).toString().padLeft(2, '0');
-    final minutes = (value.inMinutes.remainder(60)).toString().padLeft(2, '0');
-    final seconds = (value.inSeconds.remainder(60)).toString().padLeft(2, '0');
-    return '$hours:$minutes:$seconds';
-  }
-
   void _showActivationWizard() {
     showModalBottomSheet<Duration>(
       context: context,
@@ -286,7 +272,7 @@ class _MapPausedCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.75),
+                      color: Colors.white.withValues(alpha: 0.75),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: const Text(
@@ -509,7 +495,7 @@ class _LiveMapCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.72),
+                color: Colors.white.withValues(alpha: 0.72),
                 borderRadius: BorderRadius.circular(999),
               ),
               child: const Text(
@@ -553,9 +539,9 @@ class _LiveMapCard extends StatelessWidget {
               width: 120,
               height: 68,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.white.withOpacity(0.6)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.6)),
               ),
             ),
           ),
@@ -566,7 +552,7 @@ class _LiveMapCard extends StatelessWidget {
               width: 90,
               height: 58,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.24),
+                color: Colors.white.withValues(alpha: 0.24),
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
@@ -577,7 +563,7 @@ class _LiveMapCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.75),
+                color: Colors.white.withValues(alpha: 0.75),
                 borderRadius: BorderRadius.circular(999),
               ),
               child: const Text(
@@ -829,7 +815,9 @@ class _DutyActivationWizardState extends State<_DutyActivationWizard> {
                   ),
                   Switch(
                     value: _onDuty,
-                    activeColor: const Color(0xFF1FAF65),
+                    activeTrackColor: const Color(0xFF1FAF65),
+                    activeThumbColor: Colors.white,
+                    inactiveTrackColor: const Color(0xFFE4E4E4),
                     onChanged: (value) => setState(() => _onDuty = value),
                   ),
                 ],

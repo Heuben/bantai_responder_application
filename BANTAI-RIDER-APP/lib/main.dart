@@ -182,6 +182,7 @@ class _BantaiAppState extends State<BantaiApp> {
     bool keepSignedIn = true,
   }) async {
     final authRepository = AuthRepositoryImpl();
+    final isValidInput = email.contains('@') && password.trim().isNotEmpty;
 
     try {
       final session = await authRepository.login(
@@ -194,16 +195,16 @@ class _BantaiAppState extends State<BantaiApp> {
       }
     } on ApiException catch (error) {
       debugPrint('Backend login failed: ${error.message}');
-
-      final valid = email.contains('@') && password.trim().isNotEmpty;
-      if (!valid) {
+      if (AppConfig.instance.isDevelopment && isValidInput) {
+        debugPrint('Using development fallback login path.');
+      } else {
         return false;
       }
     } catch (error) {
       debugPrint('Unexpected login error: $error');
-
-      final valid = email.contains('@') && password.trim().isNotEmpty;
-      if (!valid) {
+      if (AppConfig.instance.isDevelopment && isValidInput) {
+        debugPrint('Using development fallback login path.');
+      } else {
         return false;
       }
     }
@@ -1822,7 +1823,12 @@ class _LoginScreenState extends State<LoginScreen> {
               value: keepSignedIn,
               onChanged: (value) =>
                   setState(() => keepSignedIn = value ?? false),
-              activeColor: const Color(0xFF2EC678),
+              fillColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return const Color(0xFF2EC678);
+                }
+                return const Color(0xFF8A8A8A);
+              }),
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               side: const BorderSide(color: Color(0xFF8A8A8A), width: 1.2),
             ),
@@ -1960,7 +1966,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           width: 170,
                           height: 82,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.12),
+                            color: Colors.white.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(18),
                           ),
                           child: Center(
@@ -2123,58 +2129,6 @@ class _FaceIdLoginScreenState extends State<FaceIdLoginScreen> {
           : const Center(child: CircularProgressIndicator(color: Colors.white)),
     );
   }
-}
-
-class _AmbulancePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final red = const Color(0xFFE71D24);
-    final white = const Color(0xFFF7F7F7);
-    final grey = const Color(0xFFD8D8D8);
-    final dark = const Color(0xFF2B2B2B);
-
-    final body = RRect.fromRectAndRadius(
-      Rect.fromLTWH(12, 28, size.width - 24, size.height - 38),
-      const Radius.circular(18),
-    );
-    final cab = RRect.fromRectAndRadius(
-      Rect.fromLTWH(48, 10, size.width * 0.48, size.height * 0.42),
-      const Radius.circular(16),
-    );
-
-    final bodyPaint = Paint()..color = white;
-    final redPaint = Paint()..color = red;
-    final greyPaint = Paint()..color = grey;
-    final darkPaint = Paint()..color = dark;
-
-    canvas.drawRRect(cab, bodyPaint);
-    canvas.drawRRect(body, bodyPaint);
-    canvas.drawRect(Rect.fromLTWH(38, 36, size.width - 74, 18), redPaint);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(54, 18, size.width * 0.20, 18),
-        const Radius.circular(6),
-      ),
-      redPaint,
-    );
-
-    final wheelRadius = 15.0;
-    final wheelPositions = [
-      Offset(size.width * 0.30, size.height - 10),
-      Offset(size.width * 0.72, size.height - 10),
-    ];
-    for (final wheel in wheelPositions) {
-      canvas.drawCircle(wheel, wheelRadius, darkPaint);
-      canvas.drawCircle(wheel, 7, greyPaint);
-    }
-
-    canvas.drawRect(Rect.fromLTWH(18, 74, size.width - 34, 10), greyPaint);
-    canvas.drawRect(Rect.fromLTWH(84, 48, 12, 18), redPaint);
-    canvas.drawRect(Rect.fromLTWH(146, 48, 12, 18), redPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class HomeShell extends StatefulWidget {
@@ -2994,6 +2948,7 @@ class SettingsPage extends StatelessWidget {
                   divisions: 20,
                   onChanged: onVolumeChanged,
                   activeColor: const Color(0xFFE71D24),
+                  inactiveColor: const Color(0xFFDDDDDD),
                 ),
               ],
             ),

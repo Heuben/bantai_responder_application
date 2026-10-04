@@ -19,11 +19,19 @@ class AuthRepositoryImpl implements AuthRepository {
         'email': email.trim(),
         'password': password,
       },
-      parser: (json) => Map<String, dynamic>.from(json as Map),
+      parser: (json) {
+        if (json is Map) {
+          return Map<String, dynamic>.from(json);
+        }
+        throw const FormatException('Unexpected login response format');
+      },
     );
 
-    if (!response.isSuccess || response.data == null) {
-      throw ApiException(response.statusCode, response.message ?? 'Login failed');
+    if (!response.isSuccess || response.data == null || response.data!.isEmpty) {
+      throw ApiException(
+        response.statusCode,
+        response.message ?? 'Login failed',
+      );
     }
 
     return AuthSessionModel.fromJson(response.data!);

@@ -274,14 +274,14 @@ class _FaceEnrollmentScreenState extends State<FaceEnrollmentScreen> {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(90),
                                     border: Border.all(
-                                      color: Colors.white.withOpacity(0.78),
+                                      color: Colors.white.withValues(alpha: 0.78),
                                       width: 2,
                                     ),
                                   ),
                                   child: Center(
                                     child: Icon(
                                       Icons.sentiment_satisfied_rounded,
-                                      color: Colors.white.withOpacity(0.9),
+                                      color: Colors.white.withValues(alpha: 0.9),
                                       size: 44,
                                     ),
                                   ),
@@ -393,7 +393,7 @@ class _BracketCorner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Colors.white.withOpacity(0.8);
+    final color = Colors.white.withValues(alpha: 0.8);
     return SizedBox(
       width: 34,
       height: 34,
@@ -426,14 +426,6 @@ class _BracketPainter extends CustomPainter {
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
-
-    final startX = left ? 0.0 : size.width;
-    final startY = top ? 0.0 : size.height;
-
-    final x1 = left ? 0.0 : size.width;
-    final x2 = left ? size.width * 0.38 : size.width * 0.62;
-    final y1 = top ? 0.0 : size.height;
-    final y2 = top ? size.height * 0.38 : size.height * 0.62;
 
     final path = Path();
     path.moveTo(left ? 0 : size.width, top ? 0 : size.height);

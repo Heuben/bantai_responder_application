@@ -1,13 +1,102 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:banta_rider_app/core/network/api_client.dart';
 import 'package:banta_rider_app/features/auth/screens/face_enrollment_screen.dart';
 import 'package:banta_rider_app/features/auth/screens/login_screen.dart'
     as auth_login;
 import 'package:banta_rider_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
+class EmptySuccessClient implements http.Client {
+  @override
+  Future<http.Response> get(
+    Uri url, {
+    Map<String, String>? headers,
+  }) async {
+    return http.Response('not-json', 200);
+  }
+
+  @override
+  Future<http.Response> post(
+    Uri url, {
+    Map<String, String>? headers,
+    Object? body,
+    Encoding? encoding,
+  }) async {
+    return http.Response('not-json', 200);
+  }
+
+  @override
+  Future<http.Response> delete(
+    Uri url, {
+    Map<String, String>? headers,
+    Object? body,
+    Encoding? encoding,
+  }) async {
+    return http.Response('', 200);
+  }
+
+  @override
+  Future<http.Response> head(Uri url, {Map<String, String>? headers}) async {
+    return http.Response('', 200);
+  }
+
+  @override
+  Future<http.Response> patch(
+    Uri url, {
+    Map<String, String>? headers,
+    Object? body,
+    Encoding? encoding,
+  }) async {
+    return http.Response('', 200);
+  }
+
+  @override
+  Future<http.Response> put(
+    Uri url, {
+    Map<String, String>? headers,
+    Object? body,
+    Encoding? encoding,
+  }) async {
+    return http.Response('', 200);
+  }
+
+  @override
+  Future<String> read(Uri url, {Map<String, String>? headers}) async => '';
+
+  @override
+  Future<Uint8List> readBytes(Uri url, {Map<String, String>? headers}) async =>
+      Uint8List(0);
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    return http.StreamedResponse(Stream.value([]), 200);
+  }
+
+  @override
+  void close() {}
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('api client treats malformed success payloads as a failed response', () async {
+    final client = ApiClient(client: EmptySuccessClient());
+
+    expect(
+      () async => client.get('/health'),
+      returnsNormally,
+    );
+
+    final response = await client.get('/health');
+
+    expect(response.isSuccess, isTrue);
+    expect(response.data, isNull);
+  });
 
   testWidgets('shows the Bantai startup brand and welcome state', (
     tester,

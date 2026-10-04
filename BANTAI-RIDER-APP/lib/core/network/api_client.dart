@@ -85,19 +85,34 @@ class ApiClient {
   }
 
   ApiResponse<T> _parseResponse<T>(http.Response response, {T Function(dynamic json)? parser}) {
-    final decoded = response.body.isEmpty ? null : jsonDecode(response.body);
-    final payload = decoded is Map<String, dynamic>
-        ? decoded
-        : decoded is List
+    dynamic payload;
+
+    if (response.body.trim().isNotEmpty) {
+      try {
+        final decoded = jsonDecode(response.body);
+        payload = decoded is Map<String, dynamic>
             ? decoded
-            : decoded;
+            : decoded is List
+                ? decoded
+                : decoded;
+      } catch (_) {
+        payload = null;
+      }
+    }
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      final parsed = parser == null ? payload as T? : parser(payload);
+      T? parsed;
+
+      if (parser != null) {
+        parsed = payload == null ? null : parser(payload);
+      } else {
+        parsed = payload as T?;
+      }
+
       return ApiResponse<T>(
         statusCode: response.statusCode,
         data: parsed,
-        message: 'Request succeeded',
+        message: payload == null ? 'Invalid response payload' : 'Request succeeded',
       );
     }
 

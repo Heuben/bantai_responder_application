@@ -118,6 +118,12 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!status.isGranted && !status.isLimited) {
         if (status.isPermanentlyDenied) {
           await openAppSettings();
+          if (!mounted) {
+            return;
+          }
+        }
+        if (!mounted) {
+          return;
         }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -354,7 +360,21 @@ class _LoginScreenState extends State<LoginScreen> {
                                             () =>
                                                 _keepSignedIn = value ?? false,
                                           ),
-                                          activeColor: const Color(0xFF27B36A),
+                                          fillColor:
+                                              WidgetStateProperty.resolveWith(
+                                                (states) {
+                                                  if (states.contains(
+                                                    WidgetState.selected,
+                                                  )) {
+                                                    return const Color(
+                                                      0xFF27B36A,
+                                                    );
+                                                  }
+                                                  return const Color(
+                                                    0xFFCBCBCB,
+                                                  );
+                                                },
+                                              ),
                                           side: const BorderSide(
                                             color: Color(0xFFCBCBCB),
                                             width: 1.1,
@@ -419,7 +439,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                         backgroundColor: themeRed,
                                         foregroundColor: Colors.white,
                                         elevation: 4,
-                                        shadowColor: themeRed.withOpacity(0.2),
+                                        shadowColor:
+                                            themeRed.withValues(alpha: 0.2),
                                         padding: const EdgeInsets.symmetric(
                                           vertical: 18,
                                         ),
@@ -591,7 +612,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-          if (suffixIcon != null) suffixIcon,
+          suffixIcon ?? const SizedBox.shrink(),
         ],
       ),
     );
